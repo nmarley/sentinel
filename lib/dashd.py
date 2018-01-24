@@ -59,14 +59,14 @@ class DashDaemon():
         return golist
 
     def get_current_masternode_vin(self):
-        from dashlib import parse_masternode_status_vin
+        from dashlib import parse_outpoint
 
         my_vin = None
 
         try:
             status = self.rpc_command('masternode', 'status')
             mn_outpoint = status.get('outpoint') or status.get('vin')
-            my_vin = parse_masternode_status_vin(mn_outpoint)
+            my_vin = parse_outpoint(mn_outpoint)
         except JSONRPCException as e:
             pass
 

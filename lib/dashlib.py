@@ -72,7 +72,7 @@ def elect_mn(**kwargs):
     return winner
 
 
-def parse_masternode_status_vin(status_vin_string):
+def parse_outpoint(status_vin_string):
     status_vin_string_regex = re.compile('CTxIn\(COutPoint\(([0-9a-zA-Z]+),\\s*(\d+)\),')
 
     m = status_vin_string_regex.match(status_vin_string)
@@ -287,7 +287,7 @@ def parse_raw_votes(raw_votes):
         signal = signal.lower()
         outcome = outcome.lower()
 
-        mn_collateral_outpoint = parse_masternode_status_vin(outpoint)
+        mn_collateral_outpoint = parse_outpoint(outpoint)
         v = {
             'mn_collateral_outpoint': mn_collateral_outpoint,
             'signal': signal,
