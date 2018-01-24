@@ -3,8 +3,8 @@
 
 
 class Masternode():
-    def __init__(self, collateral, mnstring):
-        (txid, vout_index) = self.parse_collateral_string(collateral)
+    def __init__(self, collateral_outpoint, mnstring):
+        (txid, vout_index) = self.parse_short_outpoint(collateral_outpoint)
         self.txid = txid
         self.vout_index = int(vout_index)
 
@@ -21,8 +21,8 @@ class Masternode():
         self.lastpaid = int(lastpaid)
 
     @classmethod
-    def parse_collateral_string(self, collateral):
-        (txid, index) = collateral.split('-')
+    def parse_short_outpoint(self, short_outpoint_str):
+        (txid, index) = short_outpoint_str.split('-')
         return (txid, index)
 
     @classmethod
@@ -37,5 +37,5 @@ class Masternode():
         return (status, protocol, address, ip_port, lastseen, activeseconds, lastpaid)
 
     @property
-    def vin(self):
+    def outpoint(self):
         return self.txid + '-' + str(self.vout_index)
