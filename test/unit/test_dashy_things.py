@@ -30,13 +30,13 @@ def mn_list():
         u'656695ed867e193490261bea74783f0a39329ff634a10a9fb6f131807eeca744-1': u'  ENABLED 70201 yepN97UoBLoP2hzWnwWGRVTcWtw1niKwcB 1474157704   824622 1474152571  71110 178.62.203.249:19999',
     }
 
-    mnlist = [Masternode(vin, mnstring) for (vin, mnstring) in masternodelist_full.items()]
+    mnlist = [Masternode(outpoint, mnstring) for (outpoint, mnstring) in masternodelist_full.items()]
 
     return mnlist
 
 
 @pytest.fixture
-def mn_status_good():
+def mn_status_good_old():
     # valid masternode status enabled & running
     status = {
         "vin": "CTxIn(COutPoint(f68a2e5d64f4a9be7ff8d0fbd9059dcd3ce98ad7a19a9260d1d6709127ffac56, 1), scriptSig=)",
@@ -48,10 +48,33 @@ def mn_status_good():
 
 
 @pytest.fixture
-def mn_status_bad():
+def mn_status_good():
+    # valid masternode status enabled & running
+    status = {
+        "outpoint": "f68a2e5d64f4a9be7ff8d0fbd9059dcd3ce98ad7a19a9260d1d6709127ffac56-1",
+        "service": "138.68.153.13:19999",
+        "payee": "yUuAsYCnG5XrjgsGvRwcDqPhgLUnzNfe8L",
+        "status": "Masternode successfully started"
+    }
+    return status
+
+
+@pytest.fixture
+def mn_status_bad_old():
     # valid masternode but not running/waiting
     status = {
         "vin": "CTxIn(COutPoint(0000000000000000000000000000000000000000000000000000000000000000, 4294967295), coinbase )",
+        "service": "[::]:0",
+        "status": "Node just started, not yet activated"
+    }
+    return status
+
+
+@pytest.fixture
+def mn_status_bad():
+    # valid masternode but not running/waiting
+    status = {
+        "outpoint": "CTxIn(COutPoint(0000000000000000000000000000000000000000000000000000000000000000, 4294967295), coinbase )",
         "service": "[::]:0",
         "status": "Node just started, not yet activated"
     }
@@ -112,12 +135,12 @@ def test_deterministic_masternode_elections(current_block_hash, mn_list):
 def test_parse_outpoint():
     from dashlib import parse_outpoint
     status = mn_status_good()
-    vin = parse_outpoint(status['vin'])
-    assert vin == 'f68a2e5d64f4a9be7ff8d0fbd9059dcd3ce98ad7a19a9260d1d6709127ffac56-1'
+    outpoint = parse_outpoint(status['vin'])
+    assert outpoint == 'f68a2e5d64f4a9be7ff8d0fbd9059dcd3ce98ad7a19a9260d1d6709127ffac56-1'
 
     status = mn_status_bad()
-    vin = parse_outpoint(status['vin'])
-    assert vin is None
+    outpoint = parse_outpoint(status['vin'])
+    assert outpoint is None
 
 
 def test_hash_function():

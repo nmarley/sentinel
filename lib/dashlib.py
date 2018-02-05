@@ -45,7 +45,7 @@ def hashit(data):
     return int(hashlib.sha256(data.encode('utf-8')).hexdigest(), 16)
 
 
-# returns the masternode VIN of the elected winner
+# returns the masternode outpoint of the elected winner
 def elect_mn(**kwargs):
     current_block_hash = kwargs['block_hash']
     mn_list = kwargs['mnlist']
@@ -57,39 +57,39 @@ def elect_mn(**kwargs):
 
     candidates = []
     for mn in enabled:
-        mn_vin_hash = hashit(mn.vin)
-        diff = mn_vin_hash - block_hash_hash
+        mn_outpoint_hash = hashit(mn.outpoint)
+        diff = mn_outpoint_hash - block_hash_hash
         absdiff = abs(diff)
-        candidates.append({'vin': mn.vin, 'diff': absdiff})
+        candidates.append({'outpoint': mn.outpoint, 'diff': absdiff})
 
     candidates.sort(key=lambda k: k['diff'])
 
     try:
-        winner = candidates[0]['vin']
+        winner = candidates[0]['outpoint']
     except:
         winner = None
 
     return winner
 
 
-def parse_outpoint(status_vin_string):
-    status_vin_string_regex = re.compile('CTxIn\(COutPoint\(([0-9a-zA-Z]+),\\s*(\d+)\),')
+def parse_outpoint(outpoint_str):
+    long_outpoint_regex = re.compile('CTxIn\(COutPoint\(([0-9a-zA-Z]+),\\s*(\d+)\),')
+    short_outpoint_regex = re.compile('([0-9a-zA-Z]+)\-(\d+)')
 
-    m = status_vin_string_regex.match(status_vin_string)
+    m = long_outpoint_regex.match(outpoint_str)
 
     # To Support additional format of string return from masternode status rpc.
     if m is None:
-        status_output_string_regex = re.compile('([0-9a-zA-Z]+)\-(\d+)')
-        m = status_output_string_regex.match(status_vin_string)
+        m = short_outpoint_regex.match(outpoint_str)
 
     txid = m.group(1)
     index = m.group(2)
 
-    vin = txid + '-' + index
+    outpoint = txid + '-' + index
     if (txid == '0000000000000000000000000000000000000000000000000000000000000000'):
-        vin = None
+        outpoint = None
 
-    return vin
+    return outpoint
 
 
 def create_superblock(proposals, event_block_height, budget_max, sb_epoch_time):

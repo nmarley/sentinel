@@ -58,19 +58,19 @@ class DashDaemon():
             golist = self.rpc_command('mnbudget', 'show')
         return golist
 
-    def get_current_masternode_vin(self):
+    def get_current_masternode_outpoint(self):
         from dashlib import parse_outpoint
 
-        my_vin = None
+        mn_outpoint = None
 
         try:
             status = self.rpc_command('masternode', 'status')
-            mn_outpoint = status.get('outpoint') or status.get('vin')
-            my_vin = parse_outpoint(mn_outpoint)
+            mn_outpoint_str = status.get('outpoint') or status.get('vin')
+            mn_outpoint = parse_outpoint(mn_outpoint_str)
         except JSONRPCException as e:
             pass
 
-        return my_vin
+        return mn_outpoint
 
     def governance_quorum(self):
         # TODO: expensive call, so memoize this
@@ -106,7 +106,7 @@ class DashDaemon():
         return self.last_superblock_height() + self.superblockcycle()
 
     def is_masternode(self):
-        return not (self.get_current_masternode_vin() is None)
+        return not (self.get_current_masternode_outpoint() is None)
 
     def is_synced(self):
         mnsync_status = self.rpc_command('mnsync', 'status')
@@ -146,13 +146,13 @@ class DashDaemon():
     def get_my_gobject_votes(self, object_hash):
         import dashlib
         if not self.gobject_votes.get(object_hash):
-            my_vin = self.get_current_masternode_vin()
-            # if we can't get MN vin from output of `masternode status`,
+            mn_outpoint = self.get_current_masternode_outpoint()
+            # if we can't get MN outpoint from output of `masternode status`,
             # return an empty list
-            if not my_vin:
+            if not mn_outpoint:
                 return []
 
-            (txid, vout_index) = my_vin.split('-')
+            (txid, vout_index) = mn_outpoint.split('-')
 
             cmd = ['gobject', 'getcurrentvotes', object_hash, txid, vout_index]
             raw_votes = self.rpc_command(*cmd)
@@ -181,17 +181,17 @@ class DashDaemon():
 
     def we_are_the_winner(self):
         import dashlib
-        # find the elected MN vin for superblock creation...
+        # find the elected MN outpoint for superblock creation...
         current_block_hash = self.current_block_hash()
         mn_list = self.get_masternodes()
         winner = dashlib.elect_mn(block_hash=current_block_hash, mnlist=mn_list)
-        my_vin = self.get_current_masternode_vin()
+        mn_outpoint = self.get_current_masternode_outpoint()
 
         # print "current_block_hash: [%s]" % current_block_hash
         # print "MN election winner: [%s]" % winner
-        # print "current masternode VIN: [%s]" % my_vin
+        # print "current masternode outpoint: [%s]" % mn_outpoint
 
-        return (winner == my_vin)
+        return (winner == mn_outpoint)
 
     @property
     def MASTERNODE_WATCHDOG_MAX_SECONDS(self):
