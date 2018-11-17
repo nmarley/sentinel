@@ -124,6 +124,11 @@ def main():
     dashd = DashDaemon.from_dash_conf(config.dash_conf)
     options = process_args()
 
+    # if --version given, print the version and exit
+    if options.print_version:
+        print("Dash Sentinel v%s" % config.sentinel_version)
+        return
+
     # check dashd connectivity
     if not is_dashd_port_open(dashd):
         print("Cannot connect to dashd. Please ensure dashd is running and the JSONRPC port is open to Sentinel.")
@@ -201,6 +206,10 @@ def process_args():
                         action='store_true',
                         help='Bypass scheduler and sync/vote immediately',
                         dest='bypass')
+    parser.add_argument('-v', '--version',
+                        action='store_true',
+                        help='Print version and exit',
+                        dest='print_version')
     args = parser.parse_args()
 
     return args
