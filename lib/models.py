@@ -174,6 +174,28 @@ class GovernanceObject(BaseModel):
         try:
             newdikt = subdikt.copy()
             newdikt['object_hash'] = object_hash
+
+            if (dikt['type'] == 2) and ('sbHeight' in newdikt):
+                # parse out payments...
+                # Normally this would be architected differently but I want to
+                # make as few changes as possible to this code before we put it
+                # out to pasture.
+
+                # Make it look like the old format for import...
+                newdikt['event_block_height'] = newdikt['sbHeight']
+                pAddrs = []
+                pAmts = []
+                pHashes = []
+                for p in newdikt['payments']:
+                    pAddrs.append(p['address'])
+                    pAmts.append(p['amount'])
+                    pHashes.append(p['propHash'])
+                newdikt['payment_addresses'] = pAddrs.join('|')
+                newdikt['payment_amounts'] = pAmts.join('|')
+                newdikt['proposal_hashes'] = pHashes.join('|')
+                newdikt.delete('payments')
+                newdikt.delete('sbHeight')
+
             if subclass(**newdikt).is_valid() is False:
                 govobj.vote_delete(dashd)
                 return (govobj, None)
