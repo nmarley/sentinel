@@ -22,16 +22,16 @@ These instructions cover installing Sentinel on Ubuntu 16.04 / 18.04.
 
 ### Dependencies
 
-Make sure Python version 2.7.x or above is installed:
+Make sure Python version 3.6.x or above is installed:
 
-    python --version
+    python -V
 
 Update system packages and ensure virtualenv is installed:
 
     $ sudo apt-get update
     $ sudo apt-get -y install python-virtualenv
 
-Make sure the local DashCore daemon running is at least version 12.1 (120100)
+Make sure the local DashCore daemon running is at least version 13.3 (130300)
 
     $ dash-cli getinfo | grep version
 
