@@ -136,7 +136,29 @@ class GovernanceObject(BaseModel):
         gobj_dict['object_type'] = subclass.govobj_type
 
         # exclude any invalid model data from dashd...
-        valid_keys = subclass.serialisable_fields()
+        # valid_keys = subclass.serialisable_fields()
+        valid_keys = []
+        if dikt['type'] == 1:
+            valid_keys = [
+                'governance_object',
+                'name',
+                'url',
+                'start_epoch',
+                'end_epoch',
+                'payment_address',
+                'payment_amount',
+                'object_hash',
+            ]
+        if dikt['type'] == 2:
+            valid_keys = [
+                'sbHeight',
+                'payments',
+                'event_block_height',
+                'payment_addresses',
+                'payment_amounts',
+                'proposal_hashes'
+            ]
+
         subdikt = {k: dikt[k] for k in valid_keys if k in dikt}
 
         # get/create, then sync vote counts from dashd, with every run
@@ -480,13 +502,29 @@ class Superblock(BaseModel, GovernanceClass):
         return True
 
     def hash(self):
-        import dashlib
-        return dashlib.hashit(self.serialise())
+        import hashlib
+        ss = hashlib.sha256()
+
+        ss.update(self.event_block_height.to_bytes(4, byteorder='little', signed=True))
+        for p in self.payments():
+            # swap the bytes before hashing
+            ss.update(bytes.fromhex(p['propHash'])[::-1])
+            address_str = p['address'].encode('utf-8')
+            address_len = len(address_str)
+            ss.update(address_len.to_bytes(1, byteorder='little', signed=False))
+            ss.update(address_str)
+            ss.update(p['amount'].to_bytes(8, byteorder='little', signed=True))
+        hash1 = ss.digest()
+        hash2 = hashlib.sha256(hash1).digest()
+
+        # swap the bytes after hashing
+        return hash2[::-1]
 
     def hex_hash(self):
-        return "%x" % self.hash()
+        return self.hash().hex()
 
     def payments(self):
+        from decimal import Decimal
         # Unpack & re-glue together
         addresses = self.payment_addresses.split('|')
         amounts = self.payment_amounts.split('|')
@@ -504,7 +542,7 @@ class Superblock(BaseModel, GovernanceClass):
 
             payments.append(obj_payment)
 
-        payments.sort(key=lambda x:x['propHash'], reverse=True)
+        payments.sort(key=lambda x: x['propHash'], reverse=True)
 
         return payments
 
@@ -521,6 +559,12 @@ class Superblock(BaseModel, GovernanceClass):
         hexdata = binascii.hexlify(json.encode('utf-8')).decode('utf-8')
 
         return hexdata
+
+    def old_serialise(self):
+        import binascii
+        import simplejson
+
+        return binascii.hexlify(simplejson.dumps(self.get_dict(), sort_keys=True).encode('utf-8')).decode('utf-8')
 
     # workaround for now, b/c we must uniquely ID a superblock with the hash,
     # in case of differing superblocks

@@ -35,7 +35,7 @@ class GovernanceClass(object):
             self.vote(dashd, models.VoteSignals.valid, models.VoteOutcomes.no)
 
     def get_submit_command(self):
-        obj_data = self.serialise()
+        obj_data = self.old_serialise()
 
         # new objects won't have parent_hash, revision, etc...
         cmd = ['gobject', 'submit', '0', '1', str(int(time.time())), obj_data]
