@@ -20,6 +20,8 @@ try:
 except ImportError:
     import urlparse
 
+COIN = 100000000
+
 # our mixin
 from governance_class import GovernanceClass
 
@@ -483,6 +485,42 @@ class Superblock(BaseModel, GovernanceClass):
 
     def hex_hash(self):
         return "%x" % self.hash()
+
+    def payments(self):
+        # Unpack & re-glue together
+        addresses = self.payment_addresses.split('|')
+        amounts = self.payment_amounts.split('|')
+        hashes = self.proposal_hashes.split('|')
+
+        num_payments = len(addresses)
+
+        payments = []
+        for i in range(0, num_payments):
+            obj_payment = {}
+
+            obj_payment['address'] = addresses[i]
+            obj_payment['amount'] = int(Decimal(amounts[i]) * COIN)
+            obj_payment['propHash'] = hashes[i]
+
+            payments.append(obj_payment)
+
+        payments.sort(key=lambda x:x['propHash'], reverse=True)
+
+        return payments
+
+    def serialise(self):
+        import binascii
+
+        obj = {
+            'type': 2,
+            'sbHeight': self.event_block_height,
+            'payments': self.payments(),
+        }
+
+        json = simplejson.dumps(obj, sort_keys=True, use_decimal=True)
+        hexdata = binascii.hexlify(json.encode('utf-8')).decode('utf-8')
+
+        return hexdata
 
     # workaround for now, b/c we must uniquely ID a superblock with the hash,
     # in case of differing superblocks
