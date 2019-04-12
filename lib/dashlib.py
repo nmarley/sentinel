@@ -159,18 +159,6 @@ def create_superblock(proposals, event_block_height, budget_max, sb_epoch_time):
             'proposal': "{}".format(proposal.object_hash)
         }
 
-        temp_payments_list = copy.deepcopy(payments_list)
-        temp_payments_list.append(payment)
-
-        # calculate size of proposed Superblock
-        sb_temp = Superblock(
-            event_block_height=event_block_height,
-            payment_addresses='|'.join([pd['address'] for pd in temp_payments_list]),
-            payment_amounts='|'.join([pd['amount'] for pd in temp_payments_list]),
-            proposal_hashes='|'.join([pd['proposal'] for pd in temp_payments_list])
-        )
-        proposed_sb_size = len(sb_temp.serialise())
-
         # add proposal and keep track of total budget allocation
         budget_allocated += proposal.payment_amount
         payments_list.append(payment)
